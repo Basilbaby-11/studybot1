@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>StudyBot — AI Study Assistant</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ══ TOPBAR ══════════════════════════════════════════════════════ -->
+<div id="topbar">
+  <div class="logo">StudyBot<span class="logo-accent">.</span></div>
+  <div class="topbar-right">
+    <div id="jwt-pill" class="jwt-pill" style="display:none">
+      <div class="jwt-dot"></div>
+      <span>JWT · exp <span id="jwt-exp">--:--</span></span>
+    </div>
+    <button class="chip on" onclick="togglePanel('left')">📚 History</button>
+    <button class="chip on" onclick="togglePanel('right')">🗂 RAG</button>
+  </div>
+</div>
+
+<!-- ══ APP ═════════════════════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- ── LEFT PANEL — Auth + History ──────────────────────────── -->
+  <div id="left-panel">
+
+    <!-- Auth -->
+    <div id="auth-section">
+      <!-- Logged out -->
+      <div id="logged-out-view">
+        <div class="auth-form">
+          <h3>🔐 Sign In</h3>
+          <div class="field">
+            <label>Username</label>
+            <input id="login-user" placeholder="e.g. student123" autocomplete="username"/>
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input id="login-pass" type="password" placeholder="password" autocomplete="current-password"/>
+          </div>
+          <div class="auth-actions">
+            <button class="btn-primary" onclick="login()">Login</button>
+            <button class="btn-ghost" onclick="register()">Register</button>
+          </div>
+          <p class="auth-note">JWT tokens · sessions persisted in SQLite</p>
+        </div>
+      </div>
+
+      <!-- Logged in -->
+      <div id="logged-in-view" style="display:none">
+        <div class="user-badge">
+          <div class="avatar" id="user-avatar">?</div>
+          <div class="user-info">
+            <div class="user-name" id="user-display-name">User</div>
+            <div class="user-role">Student · JWT Auth</div>
+          </div>
+          <button class="logout-btn" onclick="logout()" title="Logout">⇥</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div id="history-section">
+      <div class="section-label">Conversations</div>
+      <button id="new-chat-btn" onclick="newChat()">＋ New Chat</button>
+      <div id="history-list"></div>
+    </div>
+  </div><!-- /left-panel -->
+
+
+  <!-- ── CENTER PANEL — Chat ──────────────────────────────────── -->
+  <div id="center-panel">
+
+    <!-- TTS bar -->
+    <div id="tts-bar">
+      <div class="tts-waves">
+        <div class="tw"></div><div class="tw"></div><div class="tw"></div>
+        <div class="tw"></div><div class="tw"></div>
+      </div>
+      <span>Speaking…</span>
+      <button class="stop-tts" onclick="stopTTS()">■ Stop</button>
+    </div>
+
+    <!-- Mode tabs -->
+    <div id="mode-tabs">
+      <button class="mode-tab active" data-mode="chat"    onclick="setMode('chat')">💬 Chat</button>
+      <button class="mode-tab"        data-mode="quiz"    onclick="setMode('quiz')">🧪 Quiz</button>
+      <button class="mode-tab"        data-mode="summary" onclick="setMode('summary')">📋 Summary</button>
+      <button class="mode-tab"        data-mode="explain" onclick="setMode('explain')">🔬 Explain</button>
+    </div>
+
+    <!-- Quiz panel -->
+    <div class="special-panel" id="quiz-panel">
+      <div class="sp-field">
+        <label>Topic</label>
+        <input id="quiz-topic" placeholder="e.g. PageRank, Neural Networks…"/>
+      </div>
+      <div class="sp-field" style="max-width:110px">
+        <label>Questions</label>
+        <select id="quiz-num">
+          <option value="3">3 MCQs</option>
+          <option value="5" selected>5 MCQs</option>
+          <option value="8">8 MCQs</option>
+          <option value="10">10 MCQs</option>
+        </select>
+      </div>
+      <div class="sp-field" style="max-width:110px">
+        <label>Difficulty</label>
+        <select id="quiz-diff">
+          <option>Easy</option>
+          <option selected>Medium</option>
+          <option>Hard</option>
+        </select>
+      </div>
+      <button class="btn-primary" style="align-self:flex-end" onclick="runQuiz()">Generate Quiz</button>
+    </div>
+
+    <!-- Summary panel -->
+    <div class="special-panel" id="summary-panel">
+      <div class="sp-field">
+        <label>Topic</label>
+        <input id="summary-topic" placeholder="e.g. Dijkstra's Algorithm, DBMS…"/>
+      </div>
+      <div class="sp-field" style="max-width:150px">
+        <label>Format</label>
+        <select id="summary-format">
+          <option value="bullet_points">Bullet Points</option>
+          <option value="flashcards">Flashcards</option>
+          <option value="cornell_notes">Cornell Notes</option>
+          <option value="mind_map">Mind Map</option>
+        </select>
+      </div>
+      <button class="btn-primary" style="align-self:flex-end" onclick="runSummary()">Summarize</button>
+    </div>
+
+    <!-- Explain panel -->
+    <div class="special-panel" id="explain-panel">
+      <div class="sp-field">
+        <label>Concept</label>
+        <input id="explain-topic" placeholder="e.g. PageRank, Gradient Descent, B+ Trees…"/>
+      </div>
+      <div class="sp-field" style="max-width:140px">
+        <label>Level</label>
+        <select id="explain-level">
+          <option value="eli5">ELI5 (Simple)</option>
+          <option value="student" selected>Student</option>
+          <option value="advanced">Advanced</option>
+          <option value="expert">Expert</option>
+        </select>
+      </div>
+      <button class="btn-primary" style="align-self:flex-end" onclick="runExplain()">Deep Explain</button>
+    </div>
+
+    <!-- Messages area -->
+    <div id="messages">
+      <!-- Welcome screen -->
+      <div id="welcome">
+        <div class="welcome-glyph">📖</div>
+        <h2>Start studying.</h2>
+        <p>Ask anything, generate quizzes, get explanations — or upload your notes for AI-powered document Q&amp;A.</p>
+        <div class="suggestions-grid">
+          <button class="suggestion-card" onclick="quickSend('Explain the PageRank algorithm with a clear example')">
+            <span class="sc-icon">🕸</span>PageRank algorithm
+          </button>
+          <button class="suggestion-card" onclick="quickSend('What is web mining and what are its types?')">
+            <span class="sc-icon">⛏</span>Web Mining overview
+          </button>
+          <button class="suggestion-card" onclick="quickSend('Explain supervised vs unsupervised learning with examples')">
+            <span class="sc-icon">🤖</span>ML: Supervised vs Unsupervised
+          </button>
+          <button class="suggestion-card" onclick="quickSend('Explain Big O notation with real algorithm examples')">
+            <span class="sc-icon">⚡</span>Big O Notation
+          </button>
+        </div>
+      </div>
+
+      <!-- Typing indicator (must stay here in DOM) -->
+      <div id="typing">
+        <div class="t-bar"></div>
+        <div class="t-bar"></div>
+        <div class="t-bar"></div>
+        <div class="t-bar"></div>
+        <div class="t-bar"></div>
+      </div>
+    </div><!-- /messages -->
+
+    <!-- Input -->
+    <div id="input-area">
+      <div class="input-box">
+        <textarea id="msg-input" rows="1"
+          placeholder="Ask a question… (Enter to send, Shift+Enter for new line)"></textarea>
+        <div class="input-tools">
+          <button class="icon-btn" id="mic-btn" onclick="toggleMic()" title="Voice Input (STT)">🎙</button>
+          <button class="icon-btn" id="tts-btn" onclick="toggleTTS()" title="Auto Text-to-Speech">🔊</button>
+          <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Send">➤</button>
+        </div>
+      </div>
+      <div class="input-hint">Enter → send · Shift+Enter → new line · 🎙 Voice · 🔊 Auto-read</div>
+    </div>
+
+  </div><!-- /center-panel -->
+
+
+  <!-- ── RIGHT PANEL — RAG / Documents ──────────────────────── -->
+  <div id="right-panel">
+    <div class="panel-hdr">
+      RAG Documents
+      <span class="panel-badge">FAISS</span>
+    </div>
+
+    <!-- Upload zone -->
+    <div id="upload-zone">
+      <div class="up-icon">📎</div>
+      <div class="up-text">
+        <b>Click or drag</b> to upload<br/>
+        .pdf · .txt · .md supported<br/>
+        <span style="color:var(--accent2);font-size:9.5px">Chunked &amp; indexed via LangChain RAG</span>
+      </div>
+      <input type="file" id="file-input" style="display:none" accept=".pdf,.txt,.md" multiple/>
+    </div>
+
+    <!-- Processing indicator -->
+    <div id="processing">
+      <div class="spinner"></div>
+      <span class="proc-text" id="proc-text">Processing…</span>
+    </div>
+
+    <!-- Documents list -->
+    <div id="docs-list"></div>
+
+    <!-- Vector DB selector -->
+    <div id="vdb-section">
+      <div class="vdb-lbl">Vector Store</div>
+      <div class="vdb-btns">
+        <button class="vdb-btn on" onclick="selectVDB(this,'faiss')">FAISS</button>
+        <button class="vdb-btn"    onclick="selectVDB(this,'chroma')">Chroma</button>
+        <button class="vdb-btn"    onclick="selectVDB(this,'pinecone')">Pinecone</button>
+      </div>
+    </div>
+  </div><!-- /right-panel -->
+
+</div><!-- /app -->
+
+
+<!-- ══ VOICE OVERLAY ═══════════════════════════════════════════════ -->
+<div id="voice-overlay">
+  <div class="vc-ring">🎙</div>
+  <div class="vc-title">Listening…</div>
+  <div class="vc-sub" id="vc-sub">Speak now — I'm ready</div>
+  <button class="vc-cancel" onclick="cancelVoice()">✕ Cancel</button>
+</div>
+
+<!-- ══ TOAST ════════════════════════════════════════════════════════ -->
+<div id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>

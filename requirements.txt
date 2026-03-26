@@ -1,0 +1,29 @@
+# ── Web Framework ────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9       # file uploads
+
+# ── Auth ──────────────────────────────────────────────────
+PyJWT>=2.8.0
+
+# ── AI — HuggingFace ──────────────────────────────────────────────────
+huggingface_hub>=0.23.0       # HF Inference API (Mistral-7B etc, needs HF_API_KEY)
+transformers>=4.40.0          # Local models (flan-t5-base etc, no API key)
+torch>=2.2.0                  # Required for local transformers
+# For GPU support instead:  pip install torch --index-url https://download.pytorch.org/whl/cu118
+
+# ── AI — Paid providers (optional, comment out if unused) ─────────────
+anthropic>=0.28.0             # Claude (needs ANTHROPIC_API_KEY)
+openai>=1.30.0                # GPT-4o  (needs OPENAI_API_KEY)
+
+# ── RAG / Embeddings ──────────────────────────────────────
+sentence-transformers>=2.7.0  # Embeddings model (also free)
+faiss-cpu>=1.8.0              # FAISS vector index
+# chromadb>=0.5.0             # Uncomment to use Chroma instead
+# pinecone-client>=3.2.0      # Uncomment to use Pinecone instead
+
+# ── PDF Processing ────────────────────────────────────────
+pypdf>=4.2.0
+
+# ── Data Validation ───────────────────────────────────────
+pydantic>=2.7.0
