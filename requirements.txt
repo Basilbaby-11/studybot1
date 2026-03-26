@@ -27,3 +27,7 @@ pypdf>=4.2.0
 
 # ── Data Validation ───────────────────────────────────────
 pydantic>=2.7.0
+
+python-dotenv
+
+requests
